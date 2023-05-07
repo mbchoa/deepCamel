@@ -1,33 +1,112 @@
-import { useState } from 'preact/hooks'
-import preactLogo from './assets/preact.svg'
-import viteLogo from '/vite.svg'
-import './app.css'
+import { useCallback, useEffect, useRef, useState } from "preact/hooks";
+import { createFormattedJsonString } from "./utils";
 
 export function App() {
-  const [count, setCount] = useState(0)
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [value, setValue] = useState("");
+
+  const handleChange = (e) => {
+    setValue(e.target.value);
+  };
+
+  const handleCamelClick = useCallback(
+    (e) => {
+      e.preventDefault();
+      if (dialogRef.current === null) {
+        return;
+      }
+
+      setIsOpen(true);
+    },
+    [dialogRef.current]
+  );
+
+  const handleCopyClick = useCallback(() => {
+    if (dialogRef.current === null) {
+      return;
+    }
+
+    const formattedJsonString = createFormattedJsonString(value);
+    navigator.clipboard.writeText(formattedJsonString);
+    setIsOpen(false);
+  }, [dialogRef.current, value]);
+
+  const handleOutsideClick = (e) => {
+    const boundingClientRect = dialogRef.current?.getBoundingClientRect();
+    if (boundingClientRect === undefined) {
+      return;
+    }
+
+    if (
+      e.clientX < boundingClientRect.left ||
+      e.clientX > boundingClientRect.right ||
+      e.clientY < boundingClientRect.top ||
+      e.clientY > boundingClientRect.bottom
+    ) {
+      setIsOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    dialog?.removeAttribute("open");
+    return () => dialog?.close();
+  }, []);
+
+  useEffect(() => {
+    if (dialogRef.current === null) {
+      return;
+    }
+
+    if (isOpen) {
+      dialogRef.current.showModal();
+    } else {
+      dialogRef.current.close();
+    }
+  }, [isOpen]);
+
+  const renderFormattedJson = () => {
+    if (!isOpen) {
+      return null;
+    }
+
+    try {
+      return (
+        <>
+          <pre className="text-left">{createFormattedJsonString(value)}</pre>
+          <button
+            className="p-2 rounded border transition-colors hover:border-[#646cff] focus:ring-2 focus:ring-white"
+            onClick={handleCopyClick}
+          >
+            Copy to Clipboard
+          </button>
+        </>
+      );
+    } catch {
+      return <div>Invalid JSON</div>;
+    }
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} class="logo" alt="Vite logo" />
-        </a>
-        <a href="https://preactjs.com" target="_blank">
-          <img src={preactLogo} class="logo preact" alt="Preact logo" />
-        </a>
-      </div>
-      <h1>Vite + Preact</h1>
-      <div class="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+    <main>
+      <h1 className="mb-4 font-vt323">deepCamel</h1>
+      <form className="flex flex-col gap-y-8">
+        <textarea
+          className="h-40 font-mono p-2 font-sm min-h-[20rem]"
+          onChange={handleChange}
+          value={value}
+        />
+        <button
+          className="p-2 rounded border transition-colors hover:border-[#646cff] focus:ring-2 focus:ring-white"
+          onClick={handleCamelClick}
+        >
+          🐪
         </button>
-        <p>
-          Edit <code>src/app.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p class="read-the-docs">
-        Click on the Vite and Preact logos to learn more
-      </p>
-    </>
-  )
+      </form>
+      <dialog onClick={handleOutsideClick} ref={dialogRef}>
+        <div className="flex flex-col gap-y-2">{renderFormattedJson()}</div>
+      </dialog>
+    </main>
+  );
 }
