@@ -50,9 +50,11 @@ const removeJsonPropertyQuotes = (jsonString: string) =>
   jsonString.replace(/"(\w+)"\s*:/g, "$1:");
 
 export const createFormattedJsonString = (jsonString: string) => {
-  const jsonStringWithQuotes = addJsonPropertyQuotes(jsonString);
-  const parsedJson = JSON.parse(jsonStringWithQuotes);
-  const formattedJson = JSON.stringify(parsedJson, null, 2);
-  const jsonStringWithoutQuotes = removeJsonPropertyQuotes(formattedJson);
-  return jsonStringWithoutQuotes;
+  return removeJsonPropertyQuotes(
+    JSON.stringify(
+      deepCamelCase(JSON.parse(addJsonPropertyQuotes(jsonString))),
+      null,
+      2
+    )
+  );
 };

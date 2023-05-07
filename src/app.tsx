@@ -1,3 +1,4 @@
+import { ChangeEvent } from "preact/compat";
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 import { createFormattedJsonString } from "./utils";
 
@@ -6,12 +7,12 @@ export function App() {
   const [isOpen, setIsOpen] = useState(false);
   const [value, setValue] = useState("");
 
-  const handleChange = (e) => {
-    setValue(e.target.value);
+  const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    setValue(e.currentTarget.value);
   };
 
   const handleCamelClick = useCallback(
-    (e) => {
+    (e: MouseEvent) => {
       e.preventDefault();
       if (dialogRef.current === null) {
         return;
@@ -32,7 +33,7 @@ export function App() {
     setIsOpen(false);
   }, [dialogRef.current, value]);
 
-  const handleOutsideClick = (e) => {
+  const handleOutsideClick = (e: MouseEvent) => {
     const boundingClientRect = dialogRef.current?.getBoundingClientRect();
     if (boundingClientRect === undefined) {
       return;
